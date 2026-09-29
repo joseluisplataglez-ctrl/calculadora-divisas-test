@@ -1,0 +1,50 @@
+services:
+#-------------------------------------------------------------------#
+  db:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: db
+    restart: unless-stopped
+    environment:
+      ACCEPT_EULA: "Y"
+      MSSQL_SA_PASSWORD: "Dev123456!"
+      MSSQL_PID: "Express"
+    ports:
+      - "1433:1433"
+    healthcheck:
+      test: ["CMD-SHELL", "bash -c '</dev/tcp/localhost/1433'"]
+      interval: 3s
+      timeout: 3s
+      retries: 10
+      start_period: 5s
+    networks:
+      - services_net
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+  #-------------------------------------------------------------------#
+  app_net_calculator:
+    build:
+      context: .
+      dockerfile: ./Dockerfile
+    container_name: app_net_calculator
+    ports: 
+      - "8080:8080"
+    volumes:
+      - shared_data:/shared
+    networks:
+      - services_net
+    environment:
+      - ASPNETCORE_HTTP_PORT=80
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS=http://+:8080
+      - ConnectionStrings__ContextDb=Server=host.docker.internal;Database=master;User Id=sa;Password=Dev123456!;Encrypt=true;TrustServerCertificate=true;MultipleActiveResultSets=True;
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: always
+#-----------------------------------------------------------------------------------#
+volumes:
+  shared_data:
+  postgres_data:
+networks:
+  services_net:
+    name: services_net
