@@ -1,0 +1,529 @@
+﻿@{
+    ViewData["Title"] = "Home Page";
+}
+
+<div class="text-center">
+    <h1 class="display-4"> <i class="fa-solid fa-display"></i> Dashboard Divisas</h1>
+ </div>
+
+<div class="container-fluid p-3">
+    <div class="row g-4">
+
+        <div class="col-12 col-md-5 col-lg-4">
+            <div class="contenedor-formulario">
+
+                <div class="grupo-boton mb-4 text-center">
+                    <button type="button" id="btnCargarDatos" class="btn btn-success btn-lg w-100 btn-cargar py-2"
+                            data-url="@Url.Action("GetCurrencies", "Currency")">
+                        <i class="fa-solid fa-cloud-arrow-down"></i>  Carga de datos del Servicio Frankfurter
+                    </button>
+                </div>
+                
+                <div class="bloque-controles" id="bloqueFormulario" style="display: none;">
+                    <div class="row g-3">
+
+                        <div class="col-12 col-md-6 grupo-campo">
+                            <label for="opcion1" class="form-label text-secondary small fw-bold"> <i class="fa-solid fa-money-bill-1"></i> Divisa Principal</label>
+                            <select id="currencySelectPrimary" class="form-select" name="opcion1">
+                                <option value="">-- Presiona el botón para cargar --</option>
+                            </select>
+                        </div>
+
+                        <div class="col-12 col-md-6 grupo-campo">
+                            <label for="opcion2" class="form-label text-secondary small fw-bold"> <i class="fa-solid fa-money-bill-transfer"></i> Divisa a Comparar</label>
+                            <select id="currencySelectSecondary" class="form-select" data-url="@Url.Action("GetRateBaseQuoteDate", "Rate")" name="opcion2">
+                                <option value="">-- Presiona el botón para cargar --</option>
+                            </select>
+                        </div>
+
+                        <div class="col-12 grupo-campo mt-3">
+                            <label for="fechaConsulta" class="form-label text-secondary small fw-bold"> <i class="fa-solid fa-calendar-days"></i> Fecha de Consulta</label>
+                            <input type="date" id="fechaConsulta" class="form-control" name="fechaConsulta">
+                        </div>
+
+                        <div class="col-12 grupo-campo mt-4">
+                            <label for="cantidad" class="form-label text-secondary small fw-bold"><i class="fa-solid fa-calculator"></i> Cantidad a convertir</label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-dark border-secondary text-secondary">$</span>
+                                <input type="number" id="cantidad" class="form-control" name="cantidad" step="0.01" min="0" placeholder="0.00">
+                            </div>
+                        </div>
+
+                        <div class="grupo-boton mb-4 text-center mt-3">
+                            <button type="button" id="btnConvertir" class="btn btn-success btn-lg w-100 btn-cargar py-2">
+                                <i class="fa-solid fa-rotate"></i> Convertir
+                            </button>
+                        </div>
+
+                    </div>
+                </div>
+
+                
+            </div>
+        </div>
+
+        <div class="col-12 col-md-7 col-lg-8" style="display: none;" id="bloqueTabla">           
+
+            <div class="card h-100 border-secondary" style="background-color: #ffffff !important; color: black;">
+                <div class="card-header border-secondary d-flex justify-content-between align-items-center py-3">
+                    <h5 class="card-title mb-0 text-info fw-bold"> <i class="fa-solid fa-star"></i> Divisas Favoritas</h5>
+                    <span class="ms-2 fs-6 text-muted fw-normal" >
+                        <i class="fa-solid fa-arrow-up-1-9"></i>   Cantidad: <strong class="text-dark fw-bold" id="cantidadDivisa">1.0</strong>
+                    </span>
+                    <span class="ms-2 fs-6 text-muted fw-normal" id="contenedorMonedaPrincipal">
+                        <i class="fa-solid fa-money-bill-1"></i> Divisa Principal: <strong class="text-dark fw-bold" id="monedaPrincipalSeleccionada"></strong>
+                    </span>
+                </div>
+
+                <div class="card-body p-0" style="max-height: 450px; overflow-y: auto;">
+
+                    <div class="row g-0 px-3 py-2 border-bottom border-secondary text-secondary small fw-bold" style="background-color: #171717;">
+                        <div class="col-3 text-center">DIVISA</div>
+                        <div class="col-3 text-center">FACTOR</div>
+                        <div class="col-3 text-center">CONVERSIÓN</div>
+                        <div class="col-3 text-center">ACCIÓN</div>
+
+                    </div>
+                    <div id="cargandoSpinner" class="d-none text-center my-3">
+                        <div class="spinner-border text-warning" role="status">
+                            <span class="visually-hidden">Cargando...</span>
+                        </div>
+                        <span class="text-light ms-2">Actualizando divisas...</span>
+                    </div>
+
+                    <ul class="list-group list-group-flush" id="listaHistorial">                        
+
+                    </ul>
+
+                    <!-- Mensaje de estado vacío -->
+                    <div id="historialVacio" class="text-center py-5 text-muted">
+                        <p class="mb-0">No hay consultas registradas aún.</p>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<div id="toast-container" class="toast-container"></div>
+@section Scripts{
+    <script>
+        $(document).ready(function () {
+
+            //#region Cargar Divisas
+            $('#btnCargarDatos').on('click', function () {
+            const boton = $(this);
+            const url = boton.data('url');
+            const select = $('#currencySelectPrimary');
+            const select2 = $('#currencySelectSecondary');
+            const bloqueFormulario = $("#bloqueFormulario");
+            const bloqueTabla = $("#bloqueTabla");
+
+            select.html('<option value="">Cargando divisas...</option>');
+            boton.prop('disabled', true);
+
+            $.getJSON(url)
+                .done(function (listaDivisas) {
+                    select.html('<option value="">-- Seleccione una divisa --</option>');
+                    select2.html('<option value="">-- Seleccione una divisa --</option>');
+
+                    $.each(listaDivisas.data, function (index, data) {
+                        select.append(`<option value="${data.currencyIsoCode} - ${data.currencyName}">${data.currencyIsoCode} - ${data.currencyName}</option>`);
+                    });
+
+                    $.each(listaDivisas.data, function (index, data) {
+                        select2.append(`<option value="${data.currencyIsoCode} - ${data.currencyName}">${data.currencyIsoCode} - ${data.currencyName}</option>`);
+                    });
+
+                    bloqueFormulario.slideDown(400);
+                    bloqueTabla.slideDown(800);
+
+                    lanzarToast("Datos cargados desde el servicio de Frankfurter", "success");
+
+                     $('#btnCargarDatos').hide();
+                })
+                .fail(function (error) {
+                    lanzarToast(error, "error");
+                    select.html('<option value="">Error al cargar opciones.</option>');
+                })
+                .always(function () {
+                    boton.prop('disabled', false);
+                });
+            });
+            //#endregion
+
+            //#region Selección de Divisas
+            $('#currencySelectPrimary').on('change', function () {
+                const monedaSeleccionada = $(this).val();
+                const principalDivisa = $('#monedaPrincipalSeleccionada');
+
+                
+
+                if(monedaSeleccionada) {
+                    principalDivisa.text(monedaSeleccionada);
+                    //Recorrer Divisas
+                    const datosTabla = obtenerDatosTablaDivisasCompletas();
+                    if(datosTabla.length == 0){
+                        lanzarToast("Divisa principal seleccionada", "success");
+                        return;
+                    }
+                    
+                    if(datosTabla.length > 0){
+                        //Eliminar datos tabla
+                        $('#listaHistorial').empty();
+                        $('#cargandoSpinner').removeClass('d-none');
+                        datosTabla.forEach(divisa => {
+                            obtenerValores(monedaSeleccionada.slice(0,3),divisa.monedaTarget);
+                        });
+                    }
+
+                    lanzarToast("Divisas actualizadas", "success");
+                }
+            });
+
+            $('#currencySelectSecondary').on('change', function () {
+                const principalDivisa = $('#monedaPrincipalSeleccionada').text();
+                const monedaSeleccionada = $(this).val();
+                if(monedaSeleccionada) {
+                    const datosTabla = obtenerDatosTablaDivisasCompletas();
+
+                    const existeEnArreglo = datosTabla.some(function(item) {
+                        return item.monedaTarget === monedaSeleccionada.slice(0,3);
+                    });
+
+                    if(existeEnArreglo){
+                        lanzarToast("La divisa ya se encuentra en favoritos", "warning");
+                        return;
+                    }
+                    var mS = monedaSeleccionada.slice(0,3)
+                    obtenerValores(principalDivisa,mS);
+                }
+            });
+
+            function obtenerValores(baseDivisa, targetDivisa){
+                const baseCurrency = baseDivisa.length > 3 ? baseDivisa.slice(0, 3) : baseDivisa;
+                const quoteCurrency = targetDivisa;
+                const date = $('#fechaConsulta').val();
+                const cantidadDivisa = $('#cantidadDivisa').text();
+                const url = $('#currencySelectSecondary').data('url');
+
+                if(!baseCurrency){
+                    lanzarToast("Selecciona una divisa principal para obtener las tasas actuales ", "warning");
+                    return;
+                }
+
+                const payload = { baseCurrency, quoteCurrency, date}
+                
+                    $.getJSON(url, payload)
+                    .done(function (divisa) {
+                        const moneda = divisa.data.quoteCurrency.trim().toUpperCase();
+                        const valor = divisa.data.rateValue;
+                        const conversion = convertirCantidad(cantidadDivisa, valor);
+
+                        const $filaExistente = $(`#listaHistorial li[data-quote="${moneda}"]`);
+                        console.log("Actualizando valores en tiempo real para:", $filaExistente);
+                        if ($filaExistente.length > 0) {
+
+                            $filaExistente.find('.col-3::eq(1) span').text(valor);
+                            $filaExistente.find('.col-3::eq(2) span').text(conversion);
+                            $filaExistente.attr('data-conversion', conversion);
+                        } else {
+                            console.log("Insertando nueva fila para:", moneda);
+                            agregarAlHistorial(divisa.data.quoteCurrency,divisa.data.rateValue,convertirCantidad(cantidadDivisa,divisa.data.rateValue));
+                        }                        
+                    })
+                    .fail(function (error) {
+                        lanzarToast(error, "error");
+                    })
+                    .always(function () {
+                        $('#cargandoSpinner').addClass('d-none');
+                    });
+            };
+
+            //#endregion
+
+            //#region Cambio de fecha
+            $('#fechaConsulta').on('change', function () {
+                const fechaSeleccionada = $('#fechaConsulta').val();
+                $('#cargandoSpinner').removeClass('d-none');
+                if(validarFecha(fechaSeleccionada)) {
+                    actualizarValoresTabla(fechaSeleccionada);                    
+                }
+            });
+
+            function actualizarValoresTabla(fechaSeleccionada){
+                const datosTabla = obtenerDatosTabla();
+                const baseCurrency = $('#monedaPrincipalSeleccionada').text().slice(0, 3);
+
+                if(!baseCurrency){
+                    lanzarToast("Selecciona una divisa principal para obtener las tasas actuales ", "warning");
+                    return;
+                }
+                
+                //Eliminar datos tabla
+                $('#listaHistorial').empty();
+
+                datosTabla.forEach(divisa => {
+                    actualizarValores(baseCurrency,divisa.monedaTarget, fechaSeleccionada);
+                });
+                lanzarToast("Datos actualizados", "success");
+            };
+
+            function actualizarValores(baseCurrency,quoteCurr,date){
+                const cantidadDivisa = $('#cantidadDivisa');
+                const url = $('#currencySelectSecondary').data('url');
+                const quoteCurrency = quoteCurr.slice(0,3);
+
+                const payload = { baseCurrency, quoteCurrency , date}
+                $.getJSON(url, payload)
+                    .done(function (divisa) {
+                         const conversion = convertirCantidad(cantidadDivisa.text(),divisa.data.rateValue);
+                        agregarAlHistorial(quoteCurr,divisa.data.rateValue,conversion);
+                    })
+                    .fail(function (error) {
+                        lanzarToast(error, "error");
+                    })
+                    .always(function () {
+                        $('#cargandoSpinner').addClass('d-none');
+                    });
+            };
+
+            function obtenerDatosTabla(){
+                const historialArreglo = [];
+                
+                $('#listaHistorial li').each(function () {
+                    const fila = $(this);
+                    
+                    const moneda = fila.find('.col-3:nth-child(1) span').text();
+                    const valor = fila.find('.col-3:nth-child(2) span').text();
+                    if (moneda && valor) {
+                        historialArreglo.push({
+                            monedaTarget: moneda,
+                            valorDivisa: parseFloat(valor)
+                        });
+                    }
+                });
+
+                return historialArreglo;
+            }
+
+            function validarFecha(fecha){
+                var partes = fecha.split('-');
+                var fechaSeleccionada = new Date(partes[0], partes[1] - 1, partes[2]);
+
+                var hoy = new Date();
+                hoy.setHours(0, 0, 0, 0);
+
+                if (fechaSeleccionada > hoy) {
+                    lanzarToast("La fecha es incorrecta no debe ser mayor a hoy", "error");
+                    return;
+                }
+
+                return true;
+            };
+
+            //#endregion
+
+            //#region Cantidades
+            $('#btnConvertir').on('click', function () {
+                const cantidadInpunt = $('#cantidad').val();
+                const cantidadDivisa = $('#cantidadDivisa');
+                const baseCurrency = $('#monedaPrincipalSeleccionada').text().slice(0, 3);
+                if(cantidadInpunt <= 0){
+                    lanzarToast("La cantidad a convertir debe ser mayor a 0", "error");
+                    $('#cantidad').val(cantidadDivisa.text());
+                    return;
+                }
+
+                if(!baseCurrency){
+                    lanzarToast("Selecciona una divisa principal para obtener las tasas actuales ", "warning");
+                    return;
+                }
+
+                if(cantidadInpunt) {
+                    cantidadDivisa.text(cantidadInpunt);
+
+                    //Recorrer Divisas
+                    const datosTabla = obtenerDatosTablaDivisasCompletas();
+                    //Eliminar datos tabla
+                    $('#listaHistorial').empty();
+
+                    datosTabla.forEach(divisa => {
+                         const conversion = convertirCantidad(cantidadDivisa.text(),divisa.valorDivisa);
+                        agregarAlHistorial(divisa.monedaTarget,divisa.valorDivisa, conversion);
+                    });
+
+                    lanzarToast("Datos actualizados", "success");
+                }
+            });
+
+            function convertirCantidad(cantidadInpunt, cantidadDivisa){
+                return (cantidadInpunt * cantidadDivisa).toFixed(2);
+            };
+
+            function obtenerDatosTablaDivisasCompletas(){
+                const historialArreglo = [];
+
+                $('#listaHistorial li').each(function () {
+                    const fila = $(this);
+                    const moneda = fila.find('.col-3:nth-child(1) span').text();
+                    const valor = fila.find('.col-3:nth-child(2) span').text();
+                    if (moneda && valor) {
+                        historialArreglo.push({
+                            monedaTarget: moneda,
+                            valorDivisa: parseFloat(valor)
+                        });
+                    }
+                });
+
+                return historialArreglo;
+            }
+
+            //#endregion
+
+            //#region Funciones de Tabla
+
+            $(document).on('click', '.btn-eliminar', function () {
+                const $favouriteCurrency = $(this).closest('li');
+                const favouriteCurrency =$favouriteCurrency.find('.col-3 text-warning, .col-3 span').first().text().trim();
+                // Eliminar de Favoritos
+                const payloadBorrado = { favouriteCurrency };
+
+                $.ajax({
+                    url: '/FavouriteCurrency/DeleteFavouriteCurrency',
+                    type: 'DELETE', 
+                    data: payloadBorrado
+                })
+                .done(function (respuesta) {
+                    
+                    lanzarToast("Divisa eliminada de favoritos", "success");
+
+                    if (respuesta.data) {
+                        $favouriteCurrency.remove();
+
+                        if ($('#listaHistorial li').length === 0) {
+                            $('#historialVacio').removeClass('d-none');
+                        }
+                    }
+                })
+                .fail(function (error) {
+                    lanzarToast("Error al intentar eliminar la divisa", "error");
+                });
+            });
+
+            function agregarAlHistorial(moneda, valor, conversion,fecha) {
+                $('#historialVacio').addClass('d-none');
+                const lista = $('#listaHistorial');
+                const mensajeVacio = $('#historialVacio');
+               
+                
+                mensajeVacio.addClass('d-none');
+                const nuevaFila = `
+                    <li class="list-group-item bg-transparent text-light border-secondary py-3"
+                        data-quote="${moneda}" data-conversion="${conversion}">
+                        <div class="row g-0 align-items-center">
+                            <div class="col-3">
+                                <span class="text-warning fw-bold">${moneda}</span>
+                            </div>
+                            <div class="col-3 text-center">
+                                <span class="text-success fw-bold">${valor}</span>
+                            </div>
+                            <div class="col-3 text-center">
+                                <span class="text-success fw-bold">${conversion}</span>
+                            </div>
+                            <div class="col-3 text-center">
+                                <button type="button" class="btn btn-outline-danger btn-sm btn-eliminar">
+                                    <i class="fa-solid fa-trash"></i> Eliminar
+                                </button>
+                            </div>
+                        </div>
+                    </li>
+                `;            
+                lista.prepend(nuevaFila)
+            };
+
+            //#endregion          
+            
+        });
+
+        function lanzarToast(mensaje, tipo = 'success') {
+            let symbol;
+
+            if(tipo === 'success'){
+                symbol = `<i class="fa-solid fa-check"></i>`;
+            } else if(tipo === 'warning'){
+                symbol = `<i class="fa-solid fa-triangle-exclamation"></i>`;
+            } else {
+                symbol = `<i class="fa-solid fa-circle-xmark"></i>`;
+            }
+            const nuevoToast = $(`<div class="mi-toast toast-${tipo}">${symbol}  ${mensaje}</div>`);
+
+            $('#toast-container').append(nuevoToast);
+
+            setTimeout(() => {
+                nuevoToast.fadeOut(400, function() {
+                    $(this).remove();
+                });
+            }, 3000);
+        }
+        //#region Iniciar vacios tabla
+        document.addEventListener("DOMContentLoaded", function() {
+            const hoy = new Date();
+
+            const anio = hoy.getFullYear();
+            const mes = String(hoy.getMonth() + 1).padStart(2, '0');
+            const dia = String(hoy.getDate()).padStart(2, '0');
+
+            const fechaFormateada = `${anio}-${mes}-${dia}`;
+
+            document.getElementById('fechaConsulta').value = fechaFormateada;
+
+            $.getJSON('FavouriteCurrency/GetFavouriteCurrencies')
+                .done(function (listaDivisas) {
+
+                    $.each(listaDivisas.data, function (index, data) {
+                        agregarAlHistorial(data.favouriteCurrency,0.0,0.0);
+                    });
+
+                })
+                .fail(function (error) {
+                    lanzarToast(error, "error");
+                })
+                .always(function () {
+                })
+
+            function agregarAlHistorial(moneda, valor, conversion,fecha) {
+                $('#historialVacio').addClass('d-none');
+                const lista = $('#listaHistorial');
+                const mensajeVacio = $('#historialVacio');
+
+
+                mensajeVacio.addClass('d-none');
+                const nuevaFila = `
+                    <li class="list-group-item bg-transparent text-light border-secondary py-3">
+                        <div class="row g-0 align-items-center">
+                            <div class="col-3">
+                                <span class="text-warning fw-bold">${moneda}</span>
+                            </div>
+                            <div class="col-3 text-center">
+                                <span class="text-success fw-bold">${valor}</span>
+                            </div>
+                            <div class="col-3 text-center">
+                                <span class="text-success fw-bold">${conversion}</span>
+                            </div>
+                            <div class="col-3 text-center">
+                                <button type="button" class="btn btn-outline-danger btn-sm btn-eliminar">
+                                    <i class="fa-solid fa-trash"></i> Eliminar
+                                </button>
+                            </div>
+                        </div>
+                    </li>
+                `;
+                lista.prepend(nuevaFila)
+            };
+        });
+        //#endregion
+    </script>
+}

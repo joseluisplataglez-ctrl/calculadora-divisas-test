@@ -1,0 +1,37 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="AutoMapper" Version="15.1.3" />
+    <PackageReference Include="FluentValidation" Version="12.1.1" />
+    <PackageReference Include="FluentValidation.DependencyInjectionExtensions" Version="12.1.1" />
+    <PackageReference Include="MediatR" Version="13.1.0" />
+    <PackageReference Include="Microsoft.AspNetCore.Localization" Version="2.3.13" />
+    <PackageReference Include="Microsoft.Extensions.Localization" Version="8.0.31" />
+    <PackageReference Include="Serilog" Version="4.3.1" />
+    <PackageReference Include="Serilog.AspNetCore" Version="8.0.3" />
+    <PackageReference Include="Serilog.Settings.Configuration" Version="8.0.4" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\CurrencyCalculatorSystem.Domain\CurrencyCalculatorSystem.Domain.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="UseCases\Currencies\Commands\CreateCurrency\" />
+    <Folder Include="UseCases\Currencies\Commands\DeleteCurrency\" />
+    <Folder Include="UseCases\Currencies\Commands\UpdateCurrency\" />
+    <Folder Include="UseCases\Providers\Command\CreateProvider\" />
+    <Folder Include="UseCases\Providers\Command\DeleteProvider\" />
+    <Folder Include="UseCases\Providers\Command\UpdateProvider\" />
+    <Folder Include="UseCases\Rates\Command\CreateRate\" />
+    <Folder Include="UseCases\Rates\Command\DeleteRate\" />
+    <Folder Include="UseCases\Rates\Command\UpdateRate\" />
+  </ItemGroup>
+
+</Project>

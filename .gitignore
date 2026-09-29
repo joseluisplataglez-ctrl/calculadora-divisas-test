@@ -1,0 +1,21 @@
+# Carpetas de compilación (aquí se guardan las .dll y .pdb)
+[Bb]in/
+[Oo]bj/
+
+# Herramientas de .NET (paquetes y restauración)
+.nuget/
+artifacts/
+
+# Configuraciones de Visual Studio
+.vs/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# Configuraciones de VS Code
+.vscode/
+
+# Archivos de publicación / despliegue
+*.publish.htm
+*.azureauth
