@@ -12,7 +12,7 @@
 ### Repositorio Git
 
 ```bash
-https://github.com/TU-USUARIO/prueba-tecnica-tu-nombre.git
+https://github.com/joseluisplataglez-ctrl/calculadora-divisas-test.git
 ```
 
 > ⚠️ **Importante:** El aplicativo al momento de levantar aplicará las migraciones pendientes en la base de datos(ContextDb y AuditContextDB) por lo que solo es necesario cambiar la cadena de conexión
