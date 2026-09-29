@@ -251,7 +251,6 @@ graph TD
 [Pendientes]
 ```bash
 #  Agregar gráficas para una mejor lectura de las comparaciones / conversiones de las divisas
-#  Dockerizar el aplicativo para poderse ejecutar en cualquier entorno
 #  Despliegue dentro de Azure
 
 ```
